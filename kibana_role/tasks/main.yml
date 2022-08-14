@@ -1,0 +1,29 @@
+---
+- name: Upload .tar.gz file containing binaries from local storage
+  copy:
+    src: "{{ kibana_package }}"
+    dest: "/tmp/{{ kibana_package }}"
+    mode: 0755
+  register: download_kibana_binaries
+  until: download_kibana_binaries is succeeded
+- name: Ensure installation dir exists
+  become: true
+  file:
+    state: directory
+    path: "{{ kibana_home }}"
+    mode: 0755
+- name: Extract kibana in the installation directory
+  become: true
+  unarchive:
+    copy: false
+    src: "/tmp/{{ kibana_distr_name }}"
+    dest: "{{ kibana_home }}"
+    creates: "{{ kibana_home }}/bin/kibana"
+  tags: skip_ansible_lint
+- name: Export environment variables
+  become: true
+  template:
+    src: kbn.sh.j2
+    dest: /etc/profile.d/kbn.sh
+    mode: 0755
+
